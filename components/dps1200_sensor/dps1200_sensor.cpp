@@ -11,34 +11,30 @@ float f2c(uint16_t temp) {
 }
 
 void DPS1200Sensor::setup() {
-  ESP_LOGCONFIG(TAG, "Setting up DPS1200 Sensor...");
-  // Initialize I2C if needed (handled by I2CDevice)
+  ESP_LOGCONFIG(TAG, "Setting up DPS1200 Sensor at address 0x%02X...", this->address_);
 }
 
-void DPS1200Sensor::loop() {
-  // Not needed for polling-based updates
-}
+void DPS1200Sensor::loop() {}
 
 void DPS1200Sensor::update() {
   uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
-  uint8_t addy = 0x58;  // I2C address (consider making configurable)
   uint8_t cs, regCS;
   uint16_t msg[3];
   float stat;
 
   for (uint8_t i = 0; i < 6; i++) {
-    cs = (addy << 1) + reg[i];
-    regCS = ((0xff - cs) + 1) & 0xff;  // Checksum
+    cs = (this->address_ << 1) + reg[i];
+    regCS = ((0xff - cs) + 1) & 0xff;
 
     if (!this->write_bytes(reg[i], &regCS, 1)) {
       ESP_LOGW(TAG, "Failed to write to register 0x%02X", reg[i]);
       continue;
     }
 
-    delay(1);  // Short delay
+    delay(1);
 
     uint8_t data[3];
-    if (!this->read_bytes(addy, data, 3)) {
+    if (!this->read_bytes_raw(data, 3)) {
       ESP_LOGW(TAG, "Failed to read from register 0x%02X", reg[i]);
       continue;
     }
@@ -46,7 +42,7 @@ void DPS1200Sensor::update() {
     msg[1] = data[1];
     msg[2] = data[2];
 
-    uint16_t ret = (msg[1] << 8) + msg[0];  // Combine MSB and LSB
+    uint16_t ret = (msg[1] << 8) + msg[0];
 
     if (i == 0) {
       stat = ret / 32.0;
@@ -76,7 +72,6 @@ void DPS1200Sensor::update() {
     }
   }
 
-  // Calculate power (watt_in = volt_in * amp_in, watt_out = volt_out * amp_out)
   if (volt_in_ && amp_in_ && watt_in_) {
     float power = (volt_in_->get_state() * amp_in_->get_state());
     ESP_LOGD(TAG, "Input Power: %.1f W", power);
