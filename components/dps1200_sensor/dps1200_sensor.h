@@ -8,6 +8,7 @@ namespace dps1200_sensor {
 
 class DPS1200Sensor : public PollingComponent {
  public:
+  // Sensors
   sensor::Sensor *volt_in_sensor = nullptr;
   sensor::Sensor *amp_in_sensor = nullptr;
   sensor::Sensor *watt_in_sensor = nullptr;
@@ -17,7 +18,8 @@ class DPS1200Sensor : public PollingComponent {
   sensor::Sensor *internal_temp_sensor = nullptr;
   sensor::Sensor *fan_rpm_sensor = nullptr;
 
-  DPS1200Sensor() : PollingComponent(5000) {}
+  // Constructor with dynamic polling
+  DPS1200Sensor(uint32_t update_interval = 5000) : PollingComponent(update_interval) {}
 
   void setup() override;
   void update() override;
