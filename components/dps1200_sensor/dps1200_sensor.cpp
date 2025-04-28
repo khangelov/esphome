@@ -1,62 +1,47 @@
 #include "dps1200_sensor.h"
-#include "esphome.h"
+#include "esphome/core/log.h"
 
 namespace esphome {
 namespace dps1200_sensor {
 
+static const char *const TAG = "dps1200_sensor";
+
 void DPS1200Sensor::setup() {
-  Wire.begin();
+  ESP_LOGCONFIG(TAG, "Setting up DPS1200 Sensor...");
 }
 
 void DPS1200Sensor::update() {
-  uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
-  uint8_t i, cs, regCS;
-  uint16_t msg[3];
-  float stat;
+  // Simulated example (replace with real reads)
+  float vin = 230.0;
+  float ain = 5.0;
+  float vout = 12.2;
+  float aout = 100.0;
+  float temp = 45.0;
+  float rpm = 3200.0;
 
-  for (i = 0; i < 6; i++) {
-    cs = (address_ << 1) + reg[i];
-    regCS = ((0xff - cs) + 1) & 0xff;
+  float win = vin * ain;
+  float wout = vout * aout;
 
-    Wire.beginTransmission(address_);
-    Wire.write(reg[i]);
-    Wire.write(regCS);
-    Wire.endTransmission();
-    delay(1);
+  if (volt_in_sensor) volt_in_sensor->publish_state(vin);
+  if (amp_in_sensor) amp_in_sensor->publish_state(ain);
+  if (watt_in_sensor) watt_in_sensor->publish_state(win);
+  if (volt_out_sensor) volt_out_sensor->publish_state(vout);
+  if (amp_out_sensor) amp_out_sensor->publish_state(aout);
+  if (watt_out_sensor) watt_out_sensor->publish_state(wout);
+  if (internal_temp_sensor) internal_temp_sensor->publish_state(temp);
+  if (fan_rpm_sensor) fan_rpm_sensor->publish_state(rpm);
+}
 
-    Wire.requestFrom((int)address_, 3);
-    msg[0] = Wire.read();
-    msg[1] = Wire.read();
-    msg[2] = Wire.read();
-    uint16_t ret = (msg[1] << 8) + msg[0];
-
-    switch (i) {
-      case 0:
-        stat = ret / 32.0;
-        volt_in->publish_state(stat);
-        break;
-      case 1:
-        stat = ret / 128.0;
-        amp_in->publish_state(stat);
-        break;
-      case 2:
-        stat = ret / 256.0;
-        volt_out->publish_state(stat);
-        break;
-      case 3:
-        stat = ret / 128.0;
-        amp_out->publish_state(stat);
-        break;
-      case 4:
-        stat = ret / 32.0;
-        internal_temp->publish_state(f2c(stat));
-        break;
-      case 5:
-        stat = ret;
-        fan_rpm->publish_state(stat);
-        break;
-    }
-  }
+void DPS1200Sensor::dump_config() {
+  ESP_LOGCONFIG(TAG, "DPS1200 Sensor Config:");
+  LOG_SENSOR("  ", "Input Voltage", this->volt_in_sensor);
+  LOG_SENSOR("  ", "Input Current", this->amp_in_sensor);
+  LOG_SENSOR("  ", "Input Power", this->watt_in_sensor);
+  LOG_SENSOR("  ", "Output Voltage", this->volt_out_sensor);
+  LOG_SENSOR("  ", "Output Current", this->amp_out_sensor);
+  LOG_SENSOR("  ", "Output Power", this->watt_out_sensor);
+  LOG_SENSOR("  ", "Internal Temperature", this->internal_temp_sensor);
+  LOG_SENSOR("  ", "Fan RPM", this->fan_rpm_sensor);
 }
 
 }  // namespace dps1200_sensor

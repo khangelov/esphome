@@ -1,30 +1,27 @@
 #pragma once
-#include "esphome.h"
+
+#include "esphome/core/component.h"
+#include "esphome/components/sensor/sensor.h"
 
 namespace esphome {
 namespace dps1200_sensor {
 
 class DPS1200Sensor : public PollingComponent {
  public:
-  DPS1200Sensor() : PollingComponent(15000) {}
+  sensor::Sensor *volt_in_sensor = nullptr;
+  sensor::Sensor *amp_in_sensor = nullptr;
+  sensor::Sensor *watt_in_sensor = nullptr;
+  sensor::Sensor *volt_out_sensor = nullptr;
+  sensor::Sensor *amp_out_sensor = nullptr;
+  sensor::Sensor *watt_out_sensor = nullptr;
+  sensor::Sensor *internal_temp_sensor = nullptr;
+  sensor::Sensor *fan_rpm_sensor = nullptr;
 
-  Sensor *volt_in{new Sensor()};
-  Sensor *amp_in{new Sensor()};
-  Sensor *watt_in{new Sensor()};
-  Sensor *volt_out{new Sensor()};
-  Sensor *amp_out{new Sensor()};
-  Sensor *watt_out{new Sensor()};
-  Sensor *internal_temp{new Sensor()};
-  Sensor *fan_rpm{new Sensor()};
-
-  void set_address(uint8_t address) { address_ = address; }
+  DPS1200Sensor() : PollingComponent(5000) {}
 
   void setup() override;
   void update() override;
-
- protected:
-  uint8_t address_ = 0x58;
-  float f2c(uint16_t temp) { return (temp - 32) * 0.5556; }
+  void dump_config() override;
 };
 
 }  // namespace dps1200_sensor

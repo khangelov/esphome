@@ -1,0 +1,33 @@
+# Component Schema for ESPHome
+name: "DPS1200 Sensor"
+description: "Monitor DPS-1200 PSU voltage, current, wattage, temperature, and fan."
+fields:
+  update_interval:
+    type: int
+    default: 5000
+    description: "Polling interval in milliseconds"
+
+  volt_in:
+    type: sensor
+    description: "Input Voltage sensor"
+  amp_in:
+    type: sensor
+    description: "Input Current sensor"
+  watt_in:
+    type: sensor
+    description: "Input Power sensor (calculated)"
+  volt_out:
+    type: sensor
+    description: "Output Voltage sensor"
+  amp_out:
+    type: sensor
+    description: "Output Current sensor"
+  watt_out:
+    type: sensor
+    description: "Output Power sensor (calculated)"
+  internal_temp:
+    type: sensor
+    description: "Internal Temperature sensor"
+  fan_rpm:
+    type: sensor
+    description: "Cooling Fan RPM sensor"
