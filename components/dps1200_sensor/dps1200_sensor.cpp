@@ -1,34 +1,93 @@
-// esphome/components/dps1200_sensor/dps1200_sensor.h
-#pragma once
-#include "esphome/core/component.h"
-#include "esphome/components/sensor/sensor.h"
+#include "dps1200_sensor.h"
+#include "esphome/core/log.h"
 
 namespace esphome {
 namespace dps1200_sensor {
-class DPS1200Sensor : public Component {
- public:
-  void setup() override;
-  void loop() override;
-  float get_setup_priority() const override { return setup_priority::DATA; }
 
-  void set_volt_in_sensor(sensor::Sensor *sensor) { volt_in_ = sensor; }
-  void set_amp_in_sensor(sensor::Sensor *sensor) { amp_in_ = sensor; }
-  void set_watt_in_sensor(sensor::Sensor *sensor) { watt_in_ = sensor; }
-  void set_volt_out_sensor(sensor::Sensor *sensor) { volt_out_ = sensor; }
-  void set_amp_out_sensor(sensor::Sensor *sensor) { amp_out_ = sensor; }
-  void set_watt_out_sensor(sensor::Sensor *sensor) { watt_out_ = sensor; }
-  void set_internal_temp_sensor(sensor::Sensor *sensor) { internal_temp_ = sensor; }
-  void set_fan_rpm_sensor(sensor::Sensor *sensor) { fan_rpm_ = sensor; }
+static const char *const TAG = "dps1200_sensor";
 
- protected:
-  sensor::Sensor *volt_in_{nullptr};
-  sensor::Sensor *amp_in_{nullptr};
-  sensor::Sensor *watt_in_{nullptr};
-  sensor::Sensor *volt_out_{nullptr};
-  sensor::Sensor *amp_out_{nullptr};
-  sensor::Sensor *watt_out_{nullptr};
-  sensor::Sensor *internal_temp_{nullptr};
-  sensor::Sensor *fan_rpm_{nullptr};
-};
+float f2c(uint16_t temp) {
+  return (temp - 32) * 0.5556;
+}
+
+void DPS1200Sensor::setup() {
+  ESP_LOGCONFIG(TAG, "Setting up DPS1200 Sensor...");
+  // Initialize I2C if needed (handled by I2CDevice)
+}
+
+void DPS1200Sensor::loop() {
+  // Not needed for polling-based updates
+}
+
+void DPS1200Sensor::update() {
+  uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
+  uint8_t addy = 0x58;  // I2C address (consider making configurable)
+  uint8_t cs, regCS;
+  uint16_t msg[3];
+  float stat;
+
+  for (uint8_t i = 0; i < 6; i++) {
+    cs = (addy << 1) + reg[i];
+    regCS = ((0xff - cs) + 1) & 0xff;  // Checksum
+
+    if (!this->write_bytes(reg[i], &regCS, 1)) {
+      ESP_LOGW(TAG, "Failed to write to register 0x%02X", reg[i]);
+      continue;
+    }
+
+    delay(1);  // Short delay
+
+    uint8_t data[3];
+    if (!this->read_bytes(addy, data, 3)) {
+      ESP_LOGW(TAG, "Failed to read from register 0x%02X", reg[i]);
+      continue;
+    }
+    msg[0] = data[0];
+    msg[1] = data[1];
+    msg[2] = data[2];
+
+    uint16_t ret = (msg[1] << 8) + msg[0];  // Combine MSB and LSB
+
+    if (i == 0) {
+      stat = ret / 32.0;
+      ESP_LOGD(TAG, "Grid Voltage: %.2f V", stat);
+      if (volt_in_) volt_in_->publish_state(stat);
+    } else if (i == 1) {
+      stat = ret / 128.0;
+      ESP_LOGD(TAG, "Grid Current: %.3f A", stat);
+      if (amp_in_) amp_in_->publish_state(stat);
+    } else if (i == 2) {
+      stat = ret / 256.0;
+      ESP_LOGD(TAG, "Output Voltage: %.2f V", stat);
+      if (volt_out_) volt_out_->publish_state(stat);
+    } else if (i == 3) {
+      stat = ret / 128.0;
+      ESP_LOGD(TAG, "Output Current: %.3f A", stat);
+      if (amp_out_) amp_out_->publish_state(stat);
+    } else if (i == 4) {
+      stat = ret / 32.0;
+      float temp_c = f2c(stat);
+      ESP_LOGD(TAG, "Internal Temp: %.1f °C", temp_c);
+      if (internal_temp_) internal_temp_->publish_state(temp_c);
+    } else if (i == 5) {
+      stat = ret;
+      ESP_LOGD(TAG, "Fan RPM: %.0f RPM", stat);
+      if (fan_rpm_) fan_rpm_->publish_state(stat);
+    }
+  }
+
+  // Calculate power (watt_in = volt_in * amp_in, watt_out = volt_out * amp_out)
+  if (volt_in_ && amp_in_ && watt_in_) {
+    float power = (volt_in_->get_state() * amp_in_->get_state());
+    ESP_LOGD(TAG, "Input Power: %.1f W", power);
+    watt_in_->publish_state(power);
+  }
+  if (volt_out_ && amp_out_ && watt_out_) {
+    float power = (volt_out_->get_state() * amp_out_->get_state());
+    ESP_LOGD(TAG, "Output Power: %.1f W", power);
+    watt_out_->publish_state(power);
+  }
+}
+
 }  // namespace dps1200_sensor
 }  // namespace esphome
