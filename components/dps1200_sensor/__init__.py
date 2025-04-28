@@ -12,9 +12,8 @@ from esphome.const import (
 
 DEPENDENCIES = ["i2c"]
 
-dps1200_sensor_ns = cg.esphome_ns.namespace("dps1200_sensor")
-DPS1200Sensor = dps1200_sensor_ns.class_("DPS1200Sensor", cg.PollingComponent)
-
+dps1200_sensor_ns = cg.namespace('esphome::dps1200_sensor')
+DPS1200Sensor = dps1200_sensor_ns.class_('DPS1200Sensor', sensor.Sensor, cg.PollingComponent)
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(DPS1200Sensor),
@@ -28,10 +27,10 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional("internal_temp"): sensor.sensor_schema(UNIT_CELSIUS, accuracy_decimals=1),
         cv.Optional("fan_rpm"): sensor.sensor_schema(unit_of_measurement="RPM", accuracy_decimals=0),
     }
-).extend(cv.polling_component_schema("15s"))
+)
 
 async def to_code(config):
-    var = cg.new_Pvariable(config[CONF_ID])
+    var = await sensor.new_sensor(config)
     await cg.register_component(var, config)
 
     if CONF_ADDRESS in config:
