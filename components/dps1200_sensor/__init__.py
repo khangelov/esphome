@@ -58,7 +58,7 @@ async def to_code(config):
     cg.add(var.set_address(config["address"]))  # Set I2C address
 
     # Register each sensor
-    for key in ["volt_in", "amp_in", "watt_in", "volt_out", "amp_out", "watt_out", "internal_temp", "fan_rpm"]:
+    for key in ["address","volt_in", "amp_in", "watt_in", "volt_out", "amp_out", "watt_out", "internal_temp", "fan_rpm"]:
         if key in config:
             sens = await sensor.new_sensor(config[key])
             cg.add(getattr(var, f"set_{key}_sensor")(sens))
