@@ -12,8 +12,9 @@ from esphome.const import (
 
 DEPENDENCIES = ["i2c"]
 
-dps1200_sensor_ns = cg.namespace('esphome::dps1200_sensor')
-DPS1200Sensor = dps1200_sensor_ns.class_('DPS1200Sensor', sensor.Sensor, cg.PollingComponent)
+dps1200_sensor_ns = cg.esphome_ns.namespace("dps1200_sensor")
+DPS1200Sensor = dps1200_sensor_ns.class_("DPS1200Sensor", cg.PollingComponent)
+
 CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(DPS1200Sensor),
