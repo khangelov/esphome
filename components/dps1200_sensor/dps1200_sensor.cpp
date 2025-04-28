@@ -1,5 +1,5 @@
-#include "dps1200_sensor.h"
-#include "esphome/core/log.h"
+#include <dps1200_sensor.h>
+#include <esphome/core/log.h>
 
 namespace esphome {
 namespace dps1200_sensor {
