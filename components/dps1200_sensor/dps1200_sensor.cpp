@@ -1,4 +1,4 @@
-#include <dps1200_sensor.h>
+#include "dps1200_sensor.h"  // Relative include
 #include <esphome/core/log.h>
 
 namespace esphome {
