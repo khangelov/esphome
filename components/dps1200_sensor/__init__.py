@@ -28,10 +28,10 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional("internal_temp"): sensor.sensor_schema(UNIT_CELSIUS, accuracy_decimals=1),
         cv.Optional("fan_rpm"): sensor.sensor_schema(unit_of_measurement="RPM", accuracy_decimals=0),
     }
-)
+).extend(cv.polling_component_schema("15s"))
 
 async def to_code(config):
-    var = await sensor.new_sensor(config)
+    var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
     if CONF_ADDRESS in config:
