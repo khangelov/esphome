@@ -8,7 +8,6 @@ from esphome.const import (
     UNIT_AMPERE,
     UNIT_WATT,
     UNIT_CELSIUS,
-    UNIT_RPM,
 )
 
 # Namespace and class definition
@@ -26,6 +25,7 @@ SENSOR_SCHEMA = cv.Schema({
 # Main component schema
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(DPS1200Sensor),
+    cv.Optional("address", default=0x58): cv.i2c_address,  # Added I2C address
     cv.Optional("volt_in"): SENSOR_SCHEMA.extend({
         cv.Optional("unit_of_measurement", default=UNIT_VOLT): cv.string,
     }),
@@ -48,13 +48,14 @@ CONFIG_SCHEMA = cv.Schema({
         cv.Optional("unit_of_measurement", default=UNIT_CELSIUS): cv.string,
     }),
     cv.Optional("fan_rpm"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default=UNIT_RPM): cv.string,
+        cv.Optional("unit_of_measurement", default="RPM"): cv.string,  # Use string literal
     }),
-}).extend(cv.polling_component_schema("15s"))  # Match PollingComponent interval
+}).extend(cv.polling_component_schema("15s"))
 
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
+    cg.add(var.set_address(config["address"]))  # Set I2C address
 
     # Register each sensor
     for key in ["volt_in", "amp_in", "watt_in", "volt_out", "amp_out", "watt_out", "internal_temp", "fan_rpm"]:
