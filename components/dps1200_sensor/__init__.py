@@ -25,7 +25,7 @@ SENSOR_SCHEMA = cv.Schema({
 # Main component schema
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(DPS1200Sensor),
-    cv.Optional("address", default=0x58): cv.i2c_address,  # Configurable I2C address
+    cv.Required("address"): cv.i2c_address,  # Changed to mandatory
     cv.Optional("volt_in"): SENSOR_SCHEMA.extend({
         cv.Optional("unit_of_measurement", default=UNIT_VOLT): cv.string,
     }),
@@ -48,7 +48,7 @@ CONFIG_SCHEMA = cv.Schema({
         cv.Optional("unit_of_measurement", default=UNIT_CELSIUS): cv.string,
     }),
     cv.Optional("fan_rpm"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default="RPM"): cv.string,  # Use string literal
+        cv.Optional("unit_of_measurement", default="RPM"): cv.string,  # String literal for RPM
     }),
 }).extend(cv.polling_component_schema("15s"))
 
@@ -58,7 +58,7 @@ async def to_code(config):
     cg.add(var.set_address(config["address"]))  # Set I2C address
 
     # Register each sensor
-    for key in ["address","volt_in", "amp_in", "watt_in", "volt_out", "amp_out", "watt_out", "internal_temp", "fan_rpm"]:
+    for key in ["volt_in", "amp_in", "watt_in", "volt_out", "amp_out", "watt_out", "internal_temp", "fan_rpm"]:
         if key in config:
             sens = await sensor.new_sensor(config[key])
             cg.add(getattr(var, f"set_{key}_sensor")(sens))
