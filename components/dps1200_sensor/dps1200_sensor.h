@@ -2,7 +2,7 @@
 #include "esphome/components/i2c/i2c.h"
 #include "sensor.h"
 
-class DPS1200Sensor : public PollingComponent, public I2CDevice {
+class DPS1200Sensor : public Component, public I2CDevice {
  public:
   void setup() override {
     // Initialize I2C
