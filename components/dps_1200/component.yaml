@@ -1,0 +1,7 @@
+name: "dps_1200"
+version: "1.0.0"
+description: "HP PSU Monitor via I2C"
+dependencies: ["i2c"]
+esphome:
+  platforms:
+    sensor: "sensor_platform.h"
