@@ -1,6 +1,5 @@
 #include "dps_1200.h"
 #include "esphome/core/log.h"
-// Enable / Disable defines
 
 #define ADJUST_TMP_F 18 // TODO best way to calibrate?
 float intake_tmp_c = 0.0;
