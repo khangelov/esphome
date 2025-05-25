@@ -21,6 +21,38 @@ void HPPSUMonitor::update() {
   uint8_t cs, regCS;
   uint16_t msg[3]; //Received messages from PS
   float ret, Stat; //reused calculated values
+
+	for (i = 0; i<6; i++) {
+ 	   cs = (addy<<1)+ reg[i];
+ 	   regCS = ((0xff - cs) +1 ) & 0xff; //calculate checksum of add+reg
+  	   Wire.beginTransmission(addy); //open i2c with dps1200
+  	   Wire.write(reg[i]); // dps1200 cycle through registers
+  	   Wire.write(regCS); // write checksum each time
+  	   Wire.endTransmission();  // close DPS1200 i2c
+  	   delay(1); // Short delay between operations
+ 
+  	   Wire.requestFrom((int)addy, 3);  
+  	   msg[0] = Wire.read(); msg[1] = Wire.read();msg[2] = Wire.read();
+	   ret = (msg[1] << 8) + msg[0]; // Shift to MSB + LSB
+	  
+	   if ( i == 0)  { Stat = ret / 32 ; // scale factor
+    	   Serial.print ("Grid Voltage = "); Serial.print (Stat);Serial.print ("V   "); VIN->publish_state(Stat); }
+ 	   
+	   if ( i == 1) { Stat = ret / 128 ; // scale factor
+    	   Serial.print ("Grid Current = "); Serial.print (Stat);Serial.print ("A   "); IIN->publish_state(Stat);}
+
+	   if ( i == 2) { Stat = ret / 256; // scale factor
+    	   Serial.print ("Output Voltage = "); Serial.print (Stat);Serial.print ("V   "); VOUT->publish_state(Stat);  }
+	  
+	   if ( i == 3) { Stat = ret / 128; // scale factor
+    	   Serial.print ("Output Current = "); Serial.print (Stat);Serial.println ("A  "); IOUT->publish_state(Stat); }
+
+	   if ( i == 4) { Stat = ret / 32; // scale factor
+    	   Serial.print ("Internal Temp = "); Serial.print (Stat);Serial.print ("F  ");temp->publish_state(f2c(Stat));}
+       
+	   if ( i == 5) { Stat = ret ; // scale factor = 1
+    	   Serial.print ("Fan RPM = "); Serial.print (Stat);Serial.print (" RPM   ");fan->publish_state(Stat);}
+
 }
 
 
