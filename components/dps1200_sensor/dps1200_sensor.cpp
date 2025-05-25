@@ -1,87 +1,60 @@
-#include "dps1200_sensor.h"  // Relative include
-#include <esphome/core/log.h>
+#include "dps1200_sensor.h"
+#include "esphome/core/log.h"
 
 namespace esphome {
 namespace dps1200_sensor {
 
-static const char *const TAG = "dps1200_sensor";
-
-float f2c(uint16_t temp) {
-  return (temp - 32) * 0.5556;
-}
+static const char *TAG = "dps1200_sensor";
 
 void DPS1200Sensor::setup() {
-  ESP_LOGCONFIG(TAG, "Setting up DPS1200 Sensor at address 0x%02X...", this->address_);
+  ESP_LOGD(TAG, "Setting up DPS1200 Sensor...");
+  if (!this->write(nullptr, 0)) {  // Test I2C communication
+    ESP_LOGW(TAG, "I2C initialization failed!");
+    this->mark_failed();
+  }
 }
 
-void DPS1200Sensor::loop() {}
-
 void DPS1200Sensor::update() {
-  uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
-  uint8_t cs, regCS;
-  uint16_t msg[3];
-  float stat;
-
-  for (uint8_t i = 0; i < 6; i++) {
-    cs = (this->address_ << 1) + reg[i];
-    regCS = ((0xff - cs) + 1) & 0xff;
-
-    if (!this->write_bytes(reg[i], &regCS, 1)) {
-      ESP_LOGW(TAG, "Failed to write to register 0x%02X", reg[i]);
-      continue;
-    }
-
-    delay(1);
-
-    uint8_t data[3];
-    if (!this->read_bytes_raw(data, 3)) {
-      ESP_LOGW(TAG, "Failed to read from register 0x%02X", reg[i]);
-      continue;
-    }
-    msg[0] = data[0];
-    msg[1] = data[1];
-    msg[2] = data[2];
-
-    uint16_t ret = (msg[1] << 8) + msg[0];
-
-    if (i == 0) {
-      stat = ret / 32.0;
-      ESP_LOGD(TAG, "Grid Voltage: %.2f V", stat);
-      if (volt_in_) volt_in_->publish_state(stat);
-    } else if (i == 1) {
-      stat = ret / 128.0;
-      ESP_LOGD(TAG, "Grid Current: %.3f A", stat);
-      if (amp_in_) amp_in_->publish_state(stat);
-    } else if (i == 2) {
-      stat = ret / 256.0;
-      ESP_LOGD(TAG, "Output Voltage: %.2f V", stat);
-      if (volt_out_) volt_out_->publish_state(stat);
-    } else if (i == 3) {
-      stat = ret / 128.0;
-      ESP_LOGD(TAG, "Output Current: %.3f A", stat);
-      if (amp_out_) amp_out_->publish_state(stat);
-    } else if (i == 4) {
-      stat = ret / 32.0;
-      float temp_c = f2c(stat);
-      ESP_LOGD(TAG, "Internal Temp: %.1f °C", temp_c);
-      if (internal_temp_) internal_temp_->publish_state(temp_c);
-    } else if (i == 5) {
-      stat = ret;
-      ESP_LOGD(TAG, "Fan RPM: %.0f RPM", stat);
-      if (fan_rpm_) fan_rpm_->publish_state(stat);
-    }
+  if (this->is_failed()) {
+    ESP_LOGW(TAG, "Sensor failed, skipping update.");
+    return;
   }
 
-  if (volt_in_ && amp_in_ && watt_in_) {
-    float power = (volt_in_->get_state() * amp_in_->get_state());
-    ESP_LOGD(TAG, "Input Power: %.1f W", power);
-    watt_in_->publish_state(power);
+  // Read PMBus values
+  float vin = read_pmbus(0x88);  // READ_VIN
+  float iin = read_pmbus(0x89);  // READ_IIN
+  float vout = read_pmbus(0x8B); // READ_VOUT
+  float iout = read_pmbus(0x8C); // READ_IOUT
+
+  // Calculate power
+  float pin = (vin != NAN && iin != NAN) ? vin * iin : NAN;
+  float pout = (vout != NAN && iout != NAN) ? vout * iout : NAN;
+
+  // Publish to sensors
+  if (vin_sensor_ && vin != NAN) vin_sensor_->publish_state(vin);
+  if (iin_sensor_ && iin != NAN) iin_sensor_->publish_state(iin);
+  if (pin_sensor_ && pin != NAN) pin_sensor_->publish_state(pin);
+  if (vout_sensor_ && vout != NAN) vout_sensor_->publish_state(vout);
+  if (iout_sensor_ && iout != NAN) iout_sensor_->publish_state(iout);
+  if (pout_sensor_ && pout != NAN) pout_sensor_->publish_state(pout);
+}
+
+float DPS1200Sensor::decode_linear11(uint16_t val) {
+  int16_t exponent = (val >> 11) & 0x1F;
+  if (exponent & 0x10) exponent |= 0xFFE0;  // Sign extend
+  int16_t mantissa = val & 0x7FF;
+  if (mantissa & 0x400) mantissa |= 0xF800;  // Sign extend
+  return mantissa * pow(2, exponent);
+}
+
+float DPS1200Sensor::read_pmbus(uint8_t command) {
+  uint8_t data[2];
+  if (!this->write(&command, 1) || !this->read(data, 2)) {
+    ESP_LOGW(TAG, "I2C read failed for command 0x%02X", command);
+    return NAN;
   }
-  if (volt_out_ && amp_out_ && watt_out_) {
-    float power = (volt_out_->get_state() * amp_out_->get_state());
-    ESP_LOGD(TAG, "Output Power: %.1f W", power);
-    watt_out_->publish_state(power);
-  }
+  uint16_t raw = (data[1] << 8) | data[0];
+  return decode_linear11(raw);
 }
 
 }  // namespace dps1200_sensor
