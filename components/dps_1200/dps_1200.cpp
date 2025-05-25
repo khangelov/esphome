@@ -1,6 +1,20 @@
 #include "dps_1200.h"
 #include "esphome/core/log.h"
 
+#define ADJUST_TMP_F 18 // TODO best way to calibrate?
+float intake_tmp_c = 0.0;
+float internal_tmp_c = 0.0;
+
+#ifdef ENADD_STATS
+// additional vals to read
+float volt_in = 0.0;
+float amp_in = 0.0;
+float watt_in = 0.0;
+float volt_out = 0.0;
+float amp_out = 0.0;
+float watt_out = 0.0;
+#endif
+
 
 namespace esphome {
 namespace dps_1200 {
