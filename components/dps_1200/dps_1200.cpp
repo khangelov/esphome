@@ -1,5 +1,6 @@
 #include "dps_1200.h"
 #include "esphome/core/log.h"
+#include "esphome/components/i2c/i2c.h"
 
 namespace esphome {
 namespace dps_1200 {
