@@ -24,9 +24,6 @@ void HPPSUMonitor::update() {
 }
 
 
-float HPPSUMonitor::f2c(uint16_t temp) {
-  return (temp- 32) *.5556;
-}
 
 }  // namespace dps_1200
 }  // namespace esphome
