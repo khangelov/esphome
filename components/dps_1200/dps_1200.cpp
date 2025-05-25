@@ -6,6 +6,9 @@ namespace esphome {
 namespace dps_1200 {
 
 static const char *const TAG = "hp_psu";
+
+
+void HPPSUMonitor::update() {
 #define ADJUST_TMP_F 18 // TODO best way to calibrate?
 float intake_tmp_c = 0.0;
 float internal_tmp_c = 0.0;
@@ -31,9 +34,6 @@ float ret, Stat; //reused calculated values
 float f2c(uint16_t temp) {
   return (temp- 32) *.5556;
 }
-
-void HPPSUMonitor::update() {
-
 	for (i = 0; i<6; i++) {
  	   cs = (addy<<1)+ reg[i];
  	   regCS = ((0xff - cs) +1 ) & 0xff; //calculate checksum of add+reg
