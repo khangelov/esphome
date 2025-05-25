@@ -26,8 +26,8 @@ void HPPSUMonitor::update() {
  	   cs = (addy<<1)+ reg[i];
  	   regCS = ((0xff - cs) +1 ) & 0xff; //calculate checksum of add+reg
   	   Wire.beginTransmission(addy); //open i2c with dps1200
-  	   Wire.write(reg[i]); // dps1200 cycle through registers
-  	   Wire.write(regCS); // write checksum each time
+  	   this->write(reg[i]); // dps1200 cycle through registers
+  	   this->write(regCS); // write checksum each time
   	   Wire.endTransmission();  // close DPS1200 i2c
   	   delay(1); // Short delay between operations
  
