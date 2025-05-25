@@ -26,6 +26,9 @@ class HPPSUMonitor : public PollingComponent, public i2c::I2CDevice {
   void read_and_publish(uint8_t reg, sensor::Sensor *sensor);
   float convert_linear11(uint8_t high, uint8_t low);
 };
+ void setup() override {
+    // This will be called by App.setup()
+ }
 
 }  // namespace dps_1200
 }  // namespace esphome
