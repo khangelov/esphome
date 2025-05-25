@@ -1,8 +1,10 @@
 #pragma once
 
 #include "esphome/core/component.h"
-#include "sensor.h"
++ #include <esphome/components/sensor/sensor.h>
 
+
+d
 namespace esphome {
 namespace dps1200_sensor {
 
