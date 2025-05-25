@@ -1,7 +1,6 @@
 #include "esphome.h"
 #include "esphome/components/i2c/i2c.h"
 #include "esphome/components/sensor/sensor.h"
-#include  "sensor/sensor.h"
 
 class DPS1200Sensor : public Component, public I2CDevice {
  public:
