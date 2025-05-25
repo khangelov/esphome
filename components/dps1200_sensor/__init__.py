@@ -1,64 +1,29 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import sensor
-from esphome.const import (
-    CONF_ID,
-    CONF_NAME,
-    UNIT_VOLT,
-    UNIT_AMPERE,
-    UNIT_WATT,
-    UNIT_CELSIUS,
-)
+from esphome.components import sensor, i2c
+from esphome.const import CONF_ID, UNIT_VOLT, UNIT_AMPERE, UNIT_WATT, CONF_ADDRESS
 
-# Namespace and class definition
-dps1200_sensor_ns = cg.esphome_ns.namespace("dps1200_sensor")
-DPS1200Sensor = dps1200_sensor_ns.class_("DPS1200Sensor", cg.PollingComponent)
+DEPENDENCIES = ['i2c']
 
-# Schema for individual sensors
-SENSOR_SCHEMA = cv.Schema({
-    cv.Required(CONF_NAME): cv.string,
-    cv.GenerateID(): cv.declare_id(sensor.Sensor),  # Generate unique ID for each sensor
-    cv.Optional("unit_of_measurement"): cv.string,
-    cv.Optional("accuracy_decimals"): cv.positive_int,
-})
+dps1200_sensor_ns = cg.esphome_ns.namespace('dps1200_sensor')
+DPS1200Sensor = dps1200_sensor_ns.class_('DPS1200Sensor', cg.PollingComponent, i2c.I2CDevice)
 
-# Main component schema
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(DPS1200Sensor),
-    cv.Required("address"): cv.i2c_address,  # Changed to mandatory
-    cv.Optional("volt_in"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default=UNIT_VOLT): cv.string,
-    }),
-    cv.Optional("amp_in"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default=UNIT_AMPERE): cv.string,
-    }),
-    cv.Optional("watt_in"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default=UNIT_WATT): cv.string,
-    }),
-    cv.Optional("volt_out"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default=UNIT_VOLT): cv.string,
-    }),
-    cv.Optional("amp_out"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default=UNIT_AMPERE): cv.string,
-    }),
-    cv.Optional("watt_out"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default=UNIT_WATT): cv.string,
-    }),
-    cv.Optional("internal_temp"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default=UNIT_CELSIUS): cv.string,
-    }),
-    cv.Optional("fan_rpm"): SENSOR_SCHEMA.extend({
-        cv.Optional("unit_of_measurement", default="RPM"): cv.string,  # String literal for RPM
-    }),
-}).extend(cv.polling_component_schema("15s"))
+    cv.Required('vin'): sensor.sensor_schema(unit_of_measurement=UNIT_VOLT, accuracy_decimals=2),
+    cv.Required('iin'): sensor.sensor_schema(unit_of_measurement=UNIT_AMPERE, accuracy_decimals=2),
+    cv.Required('pin'): sensor.sensor_schema(unit_of_measurement=UNIT_WATT, accuracy_decimals=2),
+    cv.Required('vout'): sensor.sensor_schema(unit_of_measurement=UNIT_VOLT, accuracy_decimals=2),
+    cv.Required('iout'): sensor.sensor_schema(unit_of_measurement=UNIT_AMPERE, accuracy_decimals=2),
+    cv.Required('pout'): sensor.sensor_schema(unit_of_measurement=UNIT_WATT, accuracy_decimals=2),
+}).extend(cv.polling_component_schema('1s')).extend(i2c.i2c_device_schema(default_address=0x58))
 
-async def to_code(config):
+def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
-    await cg.register_component(var, config)
-    cg.add(var.set_address(config["address"]))  # Set I2C address
+    yield cg.register_component(var, config)
+    yield i2c.register_i2c_device(var, config)
 
-    # Register each sensor
-    for key in ["volt_in", "amp_in", "watt_in", "volt_out", "amp_out", "watt_out", "internal_temp", "fan_rpm"]:
-        if key in config:
-            sens = await sensor.new_sensor(config[key])
-            cg.add(getattr(var, f"set_{key}_sensor")(sens))
+    # Register sensors
+    for key in ['vin', 'iin', 'pin', 'vout', 'iout', 'pout']:
+        sens = yield sensor.new_sensor(config[key])
+        cg.add(getattr(var, f'set_{key}_sensor')(sens))

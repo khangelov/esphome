@@ -1,41 +1,77 @@
-#pragma once
-
 #include "esphome.h"
-#include "esphome/components/sensor/sensor.h"
-#include "esphome/components/i2c/i2c.h"
 
-namespace esphome {
-namespace dps1200_sensor {
-
-class DPS1200Sensor : public PollingComponent, public i2c::I2CDevice {
+class DPS1200Sensor : public PollingComponent, public I2CDevice {
  public:
-  void setup() override;
-  void loop() override;
-  void update() override;
-  float get_setup_priority() const override { return setup_priority::DATA; }
+  void setup() override {
+    // Initialize I2C
+    if (!this->wire_->begin()) {
+      ESP_LOGW("DPS1200 Sensor", "I2C initialization failed!");
+      this->mark_failed();
+    }
+  }
 
-  void set_volt_in_sensor(sensor::Sensor *sensor) { volt_in_ = sensor; }
-  void set_amp_in_sensor(sensor::Sensor *sensor) { amp_in_ = sensor; }
-  void set_watt_in_sensor(sensor::Sensor *sensor) { watt_in_ = sensor; }
-  void set_volt_out_sensor(sensor::Sensor *sensor) { volt_out_ = sensor; }
-  void set_amp_out_sensor(sensor::Sensor *sensor) { amp_out_ = sensor; }
-  void set_watt_out_sensor(sensor::Sensor *sensor) { watt_out_ = sensor; }
-  void set_internal_temp_sensor(sensor::Sensor *sensor) { internal_temp_ = sensor; }
-  void set_fan_rpm_sensor(sensor::Sensor *sensor) { fan_rpm_ = sensor; }
+  void update() override {
+    if (this->is_failed()) return;
 
-  void set_address(uint8_t address) { this->address_ = address; }  // Configurable I2C address
+    // Read PMBus values
+    float vin = read_pmbus(0x88);  // READ_VIN
+    float iin = read_pmbus(0x89);  // READ_IIN
+    float vout = read_pmbus(0x8B); // READ_VOUT
+    float iout = read_pmbus(0x8C); // READ_IOUT
 
- protected:
-  sensor::Sensor *volt_in_{nullptr};
-  sensor::Sensor *amp_in_{nullptr};
-  sensor::Sensor *watt_in_{nullptr};
-  sensor::Sensor *volt_out_{nullptr};
-  sensor::Sensor *amp_out_{nullptr};
-  sensor::Sensor *watt_out_{nullptr};
-  sensor::Sensor *internal_temp_{nullptr};
-  sensor::Sensor *fan_rpm_{nullptr};
-  uint8_t address_;
+    // Calculate power
+    float pin = (vin != NAN && iin != NAN) ? vin * iin : NAN;
+    float pout = (vout != NAN && iout != NAN) ? vout * iout : NAN;
+
+    // Publish to sensors
+    if (vin_sensor_ && vin != NAN) vin_sensor_->publish_state(vin);
+    if (iin_sensor_ && iin != NAN) iin_sensor_->publish_state(iin);
+    if (pin_sensor_ && pin != NAN) pin_sensor_->publish_state(pin);
+    if (vout_sensor_ && vout != NAN) vout_sensor_->publish_state(vout);
+    if (iout_sensor_ && iout != NAN) iout_sensor_->publish_state(iout);
+    if (pout_sensor_ && pout != NAN) pout_sensor_->publish_state(pout);
+  }
+
+  // Sensor setters
+  void set_vin_sensor(Sensor *sensor) { vin_sensor_ = sensor; }
+  void set_iin_sensor(Sensor *sensor) { iin_sensor_ = sensor; }
+  void set_pin_sensor(Sensor *sensor) { pin_sensor_ = sensor; }
+  void set_vout_sensor(Sensor *sensor) { vout_sensor_ = sensor; }
+  void set_iout_sensor(Sensor *sensor) { iout_sensor_ = sensor; }
+  void set_pout_sensor(Sensor *sensor) { pout_sensor_ = sensor; }
+
+ private:
+  Sensor *vin_sensor_ = nullptr;
+  Sensor *iin_sensor_ = nullptr;
+  Sensor *pin_sensor_ = nullptr;
+  Sensor *vout_sensor_ = nullptr;
+  Sensor *iout_sensor_ = nullptr;
+  Sensor *pout_sensor_ = nullptr;
+
+  float decode_linear11(uint16_t val) {
+    int16_t exponent = (val >> 11) & 0x1F;
+    if (exponent & 0x10) exponent |= 0xFFE0; // Sign extend
+    int16_t mantissa = val & 0x7FF;
+    if (mantissa & 0x400) mantissa |= 0xF800; // Sign extend
+    return mantissa * pow(2, exponent);
+  }
+
+  float read_pmbus(uint8_t command) {
+    this->wire_->beginTransmission(this->address_);
+    this->wire_->write(command);
+    if (this->wire_->endTransmission() != 0) {
+      ESP_LOGW("DPS1200 Sensor", "I2C write failed for command 0x%02X", command);
+      return NAN;
+    }
+
+    if (this->wire_->requestFrom(this->address_, (uint8_t)2) != 2) {
+      ESP_LOGW("DPS1200 Sensor", "I2C read failed for command 0x%02X", command);
+      return NAN;
+    }
+
+    uint8_t low = this->wire_->read();
+    uint8_t high = this->wire_->read();
+    uint16_t raw = (high << 8) | low;
+    return decode_linear11(raw);
+  }
 };
-
-}  // namespace dps1200_sensor
-}  // namespace esphome
