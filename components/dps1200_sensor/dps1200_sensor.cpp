@@ -1,5 +1,5 @@
 #include "esphome/core/log.h"
-#include "dps1200_sensorh"
+#include "dps1200_sensor.h"
 
 namespace esphome {
 namespace empty_compound_sensor {
