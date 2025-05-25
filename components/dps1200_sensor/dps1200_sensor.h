@@ -1,78 +1,78 @@
-#include "esphome.h"
+#pragma once
+
+#include "esphome/core/component.h"
+#include "esphome/components/sensor/sensor.h"
 #include "esphome/components/i2c/i2c.h"
 
-class DPS1200Sensor : public Component, public I2CDevice {
+namespace esphome {
+namespace chirp {
+
+class I2CSoilMoistureComponent : public PollingComponent, public i2c::I2CDevice, public sensor::Sensor {
  public:
-  void setup() override {
-    // Initialize I2C
-    if (!this->wire_->begin()) {
-      ESP_LOGW("DPS1200 Sensor", "I2C initialization failed!");
-      this->mark_failed();
-    }
+  void set_moisture(sensor::Sensor *moisture) { moisture_ = moisture; }
+  void set_temperature(sensor::Sensor *temperature) { temperature_ = temperature; }
+  void set_light(sensor::Sensor *light) { light_ = light; }
+  void set_address(uint8_t addr) { device_.new_addr = addr; }
+  void calib_capacity(uint16_t cMin, uint16_t cMax, bool raw = false) {
+    calibration_.c_Min = cMin;
+    calibration_.c_Max = cMax;
+    calibration_.c_raw = raw;
+  }
+  void calib_light(float coeficient, int32_t constant, bool raw = false) {
+    calibration_.l_coeficient = coeficient;
+    calibration_.l_constant = constant;
+    calibration_.l_raw = raw;
   }
 
-  void update() override {
-    if (this->is_failed()) return;
+  void update() override;
+  void setup() override;
+  void dump_config() override;
 
-    // Read PMBus values
-    float vin = read_pmbus(0x88);  // READ_VIN
-    float iin = read_pmbus(0x89);  // READ_IIN
-    float vout = read_pmbus(0x8B); // READ_VOUT
-    float iout = read_pmbus(0x8C); // READ_IOUT
+  float get_setup_priority() const override { return setup_priority::DATA; }
 
-    // Calculate power
-    float pin = (vin != NAN && iin != NAN) ? vin * iin : NAN;
-    float pout = (vout != NAN && iout != NAN) ? vout * iout : NAN;
+ protected:
+  struct Calibration {
+    uint16_t c_Min = 245;  // Capacity when dry.
+    uint16_t c_Max = 550;  // Capacity when wet.
+    bool c_raw = false;    // Use raw capacity values.
 
-    // Publish to sensors
-    if (vin_sensor_ && vin != NAN) vin_sensor_->publish_state(vin);
-    if (iin_sensor_ && iin != NAN) iin_sensor_->publish_state(iin);
-    if (pin_sensor_ && pin != NAN) pin_sensor_->publish_state(pin);
-    if (vout_sensor_ && vout != NAN) vout_sensor_->publish_state(vout);
-    if (iout_sensor_ && iout != NAN) iout_sensor_->publish_state(iout);
-    if (pout_sensor_ && pout != NAN) pout_sensor_->publish_state(pout);
-  }
+    float l_coeficient = -1.525;  // Sensor specific coefficient.
+    int32_t l_constant = 100000;  // Direct sunlight.
+    bool l_raw = false;           // Use raw luminance values.
+  };
 
-  // Sensor setters
-  void set_vin_sensor(Sensor *sensor) { vin_sensor_ = sensor; }
-  void set_iin_sensor(Sensor *sensor) { iin_sensor_ = sensor; }
-  void set_pin_sensor(Sensor *sensor) { pin_sensor_ = sensor; }
-  void set_vout_sensor(Sensor *sensor) { vout_sensor_ = sensor; }
-  void set_iout_sensor(Sensor *sensor) { iout_sensor_ = sensor; }
-  void set_pout_sensor(Sensor *sensor) { pout_sensor_ = sensor; }
+  struct Device {
+    bool started = false;
+    uint8_t addr = 0;
+    uint8_t new_addr = 0;
+  };
 
- private:
-  Sensor *vin_sensor_ = nullptr;
-  Sensor *iin_sensor_ = nullptr;
-  Sensor *pin_sensor_ = nullptr;
-  Sensor *vout_sensor_ = nullptr;
-  Sensor *iout_sensor_ = nullptr;
-  Sensor *pout_sensor_ = nullptr;
+  // Internal method to read the moisture from the component after it has been scheduled.
+  bool read_moisture_();
+  // Internal method to read the temperature from the component after it has been scheduled.
+  bool read_temperature_();
+  // Internal method to read the light from the component after it has been scheduled.
+  bool read_light_();
+  // Internal method to initialize the light measurement with a 3 second read delay.
+  bool measure_light();
+  // Internal method to read the firmware version of the sensor.
+  uint8_t read_version_();
+  // Internal method to read the I2C address of the sensor.
+  uint8_t read_address_();
+  // Internal method to write the I2C address of the sensor.
+  bool write_address(uint8_t new_addr);
+  // Internal method to read the busy status from the sensor.
+  bool read_busy_();
+  // Internal method to reset the sensor.
+  bool write_reset_();
 
-  float decode_linear11(uint16_t val) {
-    int16_t exponent = (val >> 11) & 0x1F;
-    if (exponent & 0x10) exponent |= 0xFFE0; // Sign extend
-    int16_t mantissa = val & 0x7FF;
-    if (mantissa & 0x400) mantissa |= 0xF800; // Sign extend
-    return mantissa * pow(2, exponent);
-  }
+  sensor::Sensor *moisture_{nullptr};
+  sensor::Sensor *temperature_{nullptr};
+  sensor::Sensor *light_{nullptr};
 
-  float read_pmbus(uint8_t command) {
-    this->wire_->beginTransmission(this->address_);
-    this->wire_->write(command);
-    if (this->wire_->endTransmission() != 0) {
-      ESP_LOGW("DPS1200 Sensor", "I2C write failed for command 0x%02X", command);
-      return NAN;
-    }
-
-    if (this->wire_->requestFrom(this->address_, (uint8_t)2) != 2) {
-      ESP_LOGW("DPS1200 Sensor", "I2C read failed for command 0x%02X", command);
-      return NAN;
-    }
-
-    uint8_t low = this->wire_->read();
-    uint8_t high = this->wire_->read();
-    uint16_t raw = (high << 8) | low;
-    return decode_linear11(raw);
-  }
+  Calibration calibration_;
+  Device device_;
 };
+
+}  // namespace chirp
+}  // namespace esphome
