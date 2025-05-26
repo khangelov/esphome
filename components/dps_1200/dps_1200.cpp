@@ -27,14 +27,24 @@ void HPPSUMonitor::update() {
     for (uint8_t i = 0; i < 6; i++) {
       uint8_t cs = (addy << 1) + reg[i];
       uint8_t regCS = ((0xFF - cs) + 1) & 0xFF;
-
+	    
+      Wire.beginTransmission(addy); //open i2c with dps1200
+      Wire.write(reg[i]); // dps1200 cycle through registers
+      Wire.write(regCS); // write checksum each time
+      Wire.endTransmission();  // close DPS1200 i2c
+      delay(1); // Short delay between operations
+ 
+       Wire.requestFrom((int)addy, 3);  
+       msg[0] = Wire.read(); msg[1] = Wire.read();msg[2] = Wire.read();
+       ret = (msg[1] << 8) + msg[0]; // Shift to MSB + LSB
+/*	    
       // Write register + checksum
       uint8_t write_data[2] = {reg[i], regCS};
       if (!this->write(write_data, 2)) {
         ESP_LOGW("hpps_monitor", "I2C write failed for register 0x%02X", reg[i]);
         continue;
       }
-
+*/
       // Read 3 bytes
       uint8_t buffer[3] = {0};
       if (!this->read_bytes(reg[i], buffer, 3)) {
