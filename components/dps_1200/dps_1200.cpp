@@ -31,20 +31,20 @@ void HPPSUMonitor::update() {
     if (this->iin_sensor != nullptr)
       this->iin_sensor->publish_state(i);
     if (this->vout_sensor != nullptr)
-      this->vout_senso->publish_state(p);
-    if (this->temp_sensor_ != nullptr)
-      this->temp_sensor_->publish_state(t);
+      this->vout_sensor->publish_state(p);
+    if (this->temp_sensor != nullptr)
+      this->temp_sensor->publish_state(t);
   } else {
     ESP_LOGW(TAG, "Failed to read from DPS 1200 at address 0x%02X", addy);
     // Optionally publish invalid states
-    if (this->voltage_sensor_ != nullptr)
-      this->voltage_sensor_->publish_state(NAN);
-    if (this->current_sensor_ != nullptr)
-      this->current_sensor_->publish_state(NAN);
+    if (this->vin_sensor != nullptr)
+      this->vin_sensor->publish_state(NAN);
+    if (this->iin_sensor != nullptr)
+      this->iin_sensor->publish_state(NAN);
     if (this->power_sensor_ != nullptr)
       this->power_sensor_->publish_state(NAN);
-    if (this->temp_sensor_ != nullptr)
-      this->temp_sensor_->publish_state(NAN);
+    if (this->temp_sensor != nullptr)
+      this->temp_sensor->publish_state(NAN);
   }
 }
 
