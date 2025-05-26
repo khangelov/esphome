@@ -7,7 +7,48 @@ namespace dps_1200 {
 
 static const char *const TAG = "hp_psu";
 
+void HPPSUMonitor::setup() {
+  // Set the I2C address (hardcoded to 0x40 as in your original code)
+  this->set_i2c_address(0x40);
+}
+
 void HPPSUMonitor::update() {
+  uint8_t addy = 0x40;  // Address is already set via set_i2c_address, but kept here for clarity
+  uint8_t buffer[13];
+
+  // Read 13 bytes from register 0x00
+  if (this->read_bytes(0x00, buffer, 13)) {
+    float v = (buffer[0] * 256 + buffer[1]) / 100.0f;      // Voltage in Volts
+    float i = (buffer[2] * 256 + buffer[3]) / 1000.0f;     // Current in Amps
+    float p = (buffer[8] * 256 + buffer[9]) / 10.0f;       // Power in Watts
+    float t = (buffer[10] * 256 + buffer[11]) / 10.0f;     // Temperature in Celsius
+
+    ESP_LOGD(TAG, "Got Voltage=%.2fV, Current=%.3fA, Power=%.1fW, Temp=%.1fC", v, i, p, t);
+
+    // Publish sensor values if sensors are configured
+    if (this->voltage_sensor_ != nullptr)
+      this->voltage_sensor_->publish_state(v);
+    if (this->current_sensor_ != nullptr)
+      this->current_sensor_->publish_state(i);
+    if (this->power_sensor_ != nullptr)
+      this->power_sensor_->publish_state(p);
+    if (this->temp_sensor_ != nullptr)
+      this->temp_sensor_->publish_state(t);
+  } else {
+    ESP_LOGW(TAG, "Failed to read from DPS 1200 at address 0x%02X", addy);
+    // Optionally publish invalid states
+    if (this->voltage_sensor_ != nullptr)
+      this->voltage_sensor_->publish_state(NAN);
+    if (this->current_sensor_ != nullptr)
+      this->current_sensor_->publish_state(NAN);
+    if (this->power_sensor_ != nullptr)
+      this->power_sensor_->publish_state(NAN);
+    if (this->temp_sensor_ != nullptr)
+      this->temp_sensor_->publish_state(NAN);
+  }
+}
+
+void HPPSUMonitor::update1() {
   float intake_tmp_c = 0.0;
   float internal_tmp_c = 0.0;
   float volt_in = 0.0;
@@ -22,6 +63,7 @@ void HPPSUMonitor::update() {
   uint8_t cs, regCS;
   uint16_t msg[3]; //Received messages from PS
   float ret, Stat; //reused calculated values
+  uint8_t buffer[13];	
 
 	for (i = 0; i<6; i++) {
  	   cs = (addy<<1)+ reg[i];
