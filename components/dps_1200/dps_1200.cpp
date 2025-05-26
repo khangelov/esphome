@@ -7,7 +7,7 @@ namespace dps_1200 {
 
 static const char *const TAG = "hp_psu";
 
-  void setup() override {
+void HPPSUMonitor::setup() override {
     // Setup if needed
   }
 
