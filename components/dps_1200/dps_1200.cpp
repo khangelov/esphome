@@ -7,7 +7,8 @@ namespace dps_1200 {
 
 static const char *const TAG = "hp_psu";
 
-void HPPSUMonitor::update() {
+/*
+void HPPSUMonitor::update3() {
   float intake_tmp_c = 0.0;
   float internal_tmp_c = 0.0;
   float volt_in = 0.0;
@@ -90,9 +91,10 @@ void HPPSUMonitor::update() {
       }
     }
 }
-/*	
-void HPPSUMonitor::update2() {
-  uint8_t addy = 0x40;  // Address is already set via set_i2c_address, but kept here for clarity
+*/
+
+void HPPSUMonitor::update() {
+  uint8_t addy = 0x58;  // Address is already set via set_i2c_address, but kept here for clarity
   uint8_t buffer[13];
 
   // Read 13 bytes from register 0x00
@@ -126,7 +128,7 @@ void HPPSUMonitor::update2() {
       this->temp_sensor->publish_state(NAN);
   }
 }
-*/
+
 /*
 void HPPSUMonitor::update1() {
   float intake_tmp_c = 0.0;
