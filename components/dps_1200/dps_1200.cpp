@@ -7,7 +7,7 @@ namespace dps_1200 {
 
 static const char *const TAG = "hp_psu";
 
-void HPPSUMonitor::update() override {
+void HPPSUMonitor::update() {
     const uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
     uint16_t raw;
     float stat;
