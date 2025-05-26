@@ -8,7 +8,7 @@
 namespace esphome {
 namespace dps_1200 {
 
-class HPPSUMonitor : public PollingComponent , public I2CDevice , public Sensor {
+class HPPSUMonitor : public PollingComponent , public I2CDevice {
  public:
   
   sensor::Sensor *vin_sensor{nullptr};
