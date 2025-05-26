@@ -11,6 +11,7 @@ void HPPSUMonitor::update() {
     const uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
     uint16_t raw;
     float stat;
+    uint8_t addy = 0x40; 	
 
     for (uint8_t i = 0; i < 6; i++) {
       uint8_t cs = (this->address_ << 1) + reg[i];
