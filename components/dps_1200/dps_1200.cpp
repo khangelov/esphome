@@ -44,7 +44,7 @@ void HPPSUMonitor::update() {
   }
 }
 
-void HPPSUMonitor::update() {
+void HPPSUMonitor::update1() {
   float intake_tmp_c = 0.0;
   float internal_tmp_c = 0.0;
   float volt_in = 0.0;
