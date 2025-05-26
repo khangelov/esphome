@@ -26,12 +26,12 @@ void HPPSUMonitor::update() {
     ESP_LOGD(TAG, "Got Voltage=%.2fV, Current=%.3fA, Power=%.1fW, Temp=%.1fC", v, i, p, t);
 
     // Publish sensor values if sensors are configured
-    if (this->vin_sensor_ != nullptr)
+    if (this->vin_sensor != nullptr)
       this->vin_sensor->publish_state(v);
     if (this->iin_sensor != nullptr)
       this->iin_sensor->publish_state(i);
-    if (this->power_sensor_ != nullptr)
-      this->power_sensor_->publish_state(p);
+    if (this->vout_sensor != nullptr)
+      this->vout_senso->publish_state(p);
     if (this->temp_sensor_ != nullptr)
       this->temp_sensor_->publish_state(t);
   } else {
@@ -48,7 +48,7 @@ void HPPSUMonitor::update() {
   }
 }
 
-void HPPSUMonitor::update1() {
+void HPPSUMonitor::update() {
   float intake_tmp_c = 0.0;
   float internal_tmp_c = 0.0;
   float volt_in = 0.0;
