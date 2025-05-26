@@ -17,14 +17,15 @@ void HPPSUMonitor::update() {
       uint8_t regCS = ((0xFF - cs) + 1) & 0xFF;
 
       // Write register + checksum
-      if (!this->write_bytes(reg[i], &regCS, 1)) {
+      uint8_t write_data[2] = {reg[i], regCS};
+      if (!this->write(write_data, 2)) {
         ESP_LOGW("hpps_monitor", "I2C write failed for register 0x%02X", reg[i]);
         continue;
       }
 
       // Read 3 bytes
       uint8_t buffer[3] = {0};
-      if (!this->read_bytes(buffer, 3)) {
+      if (!this->read_bytes(reg[i], buffer, 3)) {
         ESP_LOGW("hpps_monitor", "I2C read failed for register 0x%02X", reg[i]);
         continue;
       }
