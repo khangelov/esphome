@@ -22,8 +22,6 @@ class HPPSUMonitor : public PollingComponent, public i2c::I2CDevice {
   void setup() override {}
   void update() override;
 
- protected:
-  void read_and_publish(uint8_t reg, sensor::Sensor *sensor);
 };
 
 }  // namespace dps_1200
