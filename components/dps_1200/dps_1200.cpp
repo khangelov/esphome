@@ -13,7 +13,7 @@ void HPPSUMonitor::update() {
     float stat;
 
     for (uint8_t i = 0; i < 6; i++) {
-      uint8_t cs = (0x40 << 1) + reg[i];
+      uint8_t cs = (this->address_ << 1) + reg[i];
       uint8_t regCS = ((0xFF - cs) + 1) & 0xFF;
 
       // Write register + checksum
