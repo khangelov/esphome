@@ -7,7 +7,8 @@ namespace dps_1200 {
 
 static const char *const TAG = "hp_psu";
 
-
+void HPPSUMonitor::setup() {
+}
 
 void HPPSUMonitor::update() {
   uint8_t addy = 0x58;  // Address is already set via set_i2c_address, but kept here for clarity
