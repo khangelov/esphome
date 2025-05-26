@@ -41,8 +41,8 @@ void HPPSUMonitor::update() {
       this->vin_sensor->publish_state(NAN);
     if (this->iin_sensor != nullptr)
       this->iin_sensor->publish_state(NAN);
-    if (this->power_sensor_ != nullptr)
-      this->power_sensor_->publish_state(NAN);
+    if (this->vout_sensor != nullptr)
+      this->vout_sensor->publish_state(NAN);
     if (this->temp_sensor != nullptr)
       this->temp_sensor->publish_state(NAN);
   }
