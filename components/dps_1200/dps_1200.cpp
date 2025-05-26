@@ -44,8 +44,5 @@ void HPPSUMonitor::update() {
   }
 }
 
-
-
-
 }  // namespace dps_1200
 }  // namespace esphome
