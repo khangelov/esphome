@@ -10,7 +10,7 @@ namespace dps_1200 {
 
 class HPPSUMonitor : public PollingComponent, public I2CDevice, public Sensor {
  public:
-  HPPSUMonitor() : PollingComponent(5000), I2CDevice(0x58) {}
+  
   sensor::Sensor *vin_sensor{nullptr};
   sensor::Sensor *vout_sensor{nullptr};
   sensor::Sensor *iin_sensor{nullptr};
@@ -19,6 +19,8 @@ class HPPSUMonitor : public PollingComponent, public I2CDevice, public Sensor {
   sensor::Sensor *pout_sensor{nullptr};
   sensor::Sensor *temp_sensor{nullptr};
   sensor::Sensor *fan_sensor{nullptr};
+
+  HPPSUMonitor() : PollingComponent(5000), I2CDevice(0x58) {}
 
   void setup() override {}
   void update() override;
