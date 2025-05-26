@@ -7,8 +7,67 @@ namespace dps_1200 {
 
 static const char *const TAG = "hp_psu";
 
+void HPPSUMonitor::update() override {
+    const uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
+    uint16_t raw;
+    float stat;
 
-void HPPSUMonitor::update() {
+    for (uint8_t i = 0; i < 6; i++) {
+      uint8_t cs = (this->address_ << 1) + reg[i];
+      uint8_t regCS = ((0xFF - cs) + 1) & 0xFF;
+
+      // Write register + checksum
+      if (!this->write_bytes(reg[i], &regCS, 1)) {
+        ESP_LOGW("hpps_monitor", "I2C write failed for register 0x%02X", reg[i]);
+        continue;
+      }
+
+      // Read 3 bytes
+      uint8_t buffer[3] = {0};
+      if (!this->read_bytes(buffer, 3)) {
+        ESP_LOGW("hpps_monitor", "I2C read failed for register 0x%02X", reg[i]);
+        continue;
+      }
+
+      raw = (buffer[1] << 8) | buffer[0];  // LSB + MSB
+
+      switch (i) {
+        case 0: // Input Voltage
+          stat = raw / 32.0f;
+          vin_sensor->publish_state(stat);
+          ESP_LOGI("hpps_monitor", "Grid Voltage: %.2f V", stat);
+          break;
+        case 1: // Input Current
+          stat = raw / 128.0f;
+          iin_sensor->publish_state(stat);
+          ESP_LOGI("hpps_monitor", "Grid Current: %.2f A", stat);
+          break;
+        case 2: // Output Voltage
+          stat = raw / 256.0f;
+          vout_sensor->publish_state(stat);
+          ESP_LOGI("hpps_monitor", "Output Voltage: %.2f V", stat);
+          break;
+        case 3: // Output Current
+          stat = raw / 128.0f;
+          iout_sensor->publish_state(stat);
+          ESP_LOGI("hpps_monitor", "Output Current: %.2f A", stat);
+          break;
+        case 4: // Internal Temp
+          stat = raw / 32.0f;
+          stat = (stat - 32.0f) * 5.0f / 9.0f;  // Convert F to C
+          temp_sensor->publish_state(stat);
+          ESP_LOGI("hpps_monitor", "Internal Temp: %.2f °C", stat);
+          break;
+        case 5: // Fan RPM
+          stat = raw * 1.0f;  // scale factor = 1
+          fan_sensor->publish_state(stat);
+          ESP_LOGI("hpps_monitor", "Fan RPM: %.0f", stat);
+          break;
+      }
+    }
+}
+/*	
+void HPPSUMonitor::update2() {
   uint8_t addy = 0x40;  // Address is already set via set_i2c_address, but kept here for clarity
   uint8_t buffer[13];
 
@@ -25,29 +84,25 @@ void HPPSUMonitor::update() {
     if (this->vin_sensor != nullptr)
       this->vin_sensor->publish_state(v);
     if (this->iin_sensor != nullptr)
-      this->iin_sensor->publish_state(i);
-/*	  
+      this->iin_sensor->publish_state(i); 
     if (this->vout_sensor != nullptr)
       this->vout_sensor->publish_state(p);
     if (this->temp_sensor != nullptr)
       this->temp_sensor->publish_state(t);
-*/      
   } else {
     ESP_LOGW(TAG, "Failed to read from DPS 1200 at address 0x%02X", addy);
     // Optionally publish invalid states
     if (this->vin_sensor != nullptr)
       this->vin_sensor->publish_state(NAN);
     if (this->iin_sensor != nullptr)
-      this->iin_sensor->publish_state(NAN);
-/*	  
+      this->iin_sensor->publish_state(NAN);  
     if (this->vout_sensor != nullptr)
       this->vout_sensor->publish_state(NAN);
     if (this->temp_sensor != nullptr)
       this->temp_sensor->publish_state(NAN);
-*/      
   }
 }
-
+*/
 /*
 void HPPSUMonitor::update1() {
   float intake_tmp_c = 0.0;
