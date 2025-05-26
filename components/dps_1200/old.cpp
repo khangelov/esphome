@@ -24,7 +24,7 @@ void HPPSUMonitor::update3() {
       Wire.beginTransmission(addy); //open i2c with dps1200
       write_byte(reg[i]); // dps1200 cycle through registers
       write_byte(regCS); // write checksum each time
-      /* Wire.endTransmission();  // close DPS1200 i2c */
+       //Wire.endTransmission();  // close DPS1200 i2c //
       delay(1); // Short delay between operations
  
        Wire.requestFrom((int)addy, 3);  
@@ -82,9 +82,9 @@ void HPPSUMonitor::update3() {
       }
     }
 }
-*/
 
-/*
+
+
 void HPPSUMonitor::update1() {
   float intake_tmp_c = 0.0;
   float internal_tmp_c = 0.0;
