@@ -44,6 +44,7 @@ void HPPSUMonitor::update() {
   }
 }
 
+/*
 void HPPSUMonitor::update1() {
   float intake_tmp_c = 0.0;
   float internal_tmp_c = 0.0;
@@ -95,6 +96,8 @@ void HPPSUMonitor::update1() {
 }
 
 }
+*/
+
 
 }  // namespace dps_1200
 }  // namespace esphome
