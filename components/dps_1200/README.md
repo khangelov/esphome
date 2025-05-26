@@ -29,7 +29,7 @@ external_components:
       type: git
       url: https://github.com/khangelov/esphome
       ref: main
-      path: components/dps_1200
+
 
 i2c:
   sda: GPIO21
