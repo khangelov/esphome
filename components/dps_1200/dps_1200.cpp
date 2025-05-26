@@ -8,10 +8,21 @@ namespace dps_1200 {
 static const char *const TAG = "hp_psu";
 
 void HPPSUMonitor::update() {
-    const uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
-    uint16_t raw;
-    float stat;
-    uint8_t addy = 0x58; 	
+  float intake_tmp_c = 0.0;
+  float internal_tmp_c = 0.0;
+  float volt_in = 0.0;
+  float amp_in = 0.0;
+  float watt_in = 0.0;
+  float volt_out = 0.0;
+  float amp_out = 0.0;
+  float watt_out = 0.0;
+  uint8_t addy = 0x58; //Supply Address verify w/I2C scanner
+  uint8_t i; // index for loop
+  uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e}; 
+  uint8_t cs, regCS;
+  uint16_t msg[3]; //Received messages from PS
+  float ret, Stat; //reused calculated values
+  uint8_t buffer[13];	
 
     for (uint8_t i = 0; i < 6; i++) {
       uint8_t cs = (addy << 1) + reg[i];
