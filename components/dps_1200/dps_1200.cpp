@@ -7,7 +7,23 @@ namespace dps_1200 {
 
 static const char *const TAG = "hp_psu";
 
+void HPPSUMonitor::setup() {
+  ESP_LOGCONFIG(TAG, "Setting up HPPSUMonitor...");
+}
 
+
+void HPPSUMonitor::loop() {
+  }
+}
+
+void HPPSUMonitor::dump_config() {
+  ESP_LOGCONFIG(TAG, "HPPSUMonitor:");
+  LOG_I2C_DEVICE(this);
+  if (this->is_failed()) {
+    ESP_LOGE(TAG, "Connection with HPPSUMonitor failed!");
+  }
+
+ 
 void HPPSUMonitor::update() {
   uint8_t addy = 0x58;  // Address is already set via set_i2c_address, but kept here for clarity
   uint8_t buffer[13];
