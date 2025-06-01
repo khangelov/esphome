@@ -19,10 +19,8 @@ class HPPSUMonitor : public PollingComponent, public i2c::I2CDevice {
   sensor::Sensor *temp_sensor{nullptr};
   sensor::Sensor *fan_sensor{nullptr};
 
+  void setup() override
   void update() override;
-  void setup() override;
-  void loop() override;
-  void dump_config() override;
 
 };
 
