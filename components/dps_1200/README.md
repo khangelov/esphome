@@ -2,14 +2,14 @@
 
 This ESPHome external component provides I2C access to HP server power supplies such as the DPS-1200, allowing monitoring of:
 
-- Input Voltage (VIN)
-- Output Voltage (VOUT)
+- Input Voltage (grid_voltage)
+- Output Voltage (output_voltage)
 - Input Current (IIN)
 - Output Current (IOUT)
-- Input Power (PIN)
-- Output Power (POUT)
-- Internal Temperature
-- Fan Speed
+- Input Power (input_power
+- Output Power (output_power)
+- Internal Temperature (internal_temperature)
+- Fan Speed (fan_rpm:)
 
 ## Hardware Requirements
 
@@ -28,31 +28,34 @@ external_components:
   - source:
       type: git
       url: https://github.com/khangelov/esphome
-      ref: main
+    components: [dps_1200]
 
 
 i2c:
-  sda: GPIO21
-  scl: GPIO22
+  sda: GPIO6
+  scl: GPIO5
   scan: true
+  id: bus_a
+  frequency: 100kHz
+
 
 sensor:
   - platform: dps_1200
     update_interval: 10s
-    vin:
-      name: "VIN"
-    vout:
-      name: "VOUT"
-    iin:
-      name: "IIN"
-    iout:
-      name: "IOUT"
-    pin:
-      name: "Power In"
-    pout:
-      name: "Power Out"
-    temp:
-      name: "Temperature"
-    fan:
-      name: "Fan Speed"
+    grid_voltage:
+      name: "Grid Voltage"
+    grid_current:
+      name: "Grid Current"
+    output_voltage:
+      name: "Output Voltage"
+    output_current:
+      name: "Output Current"
+    internal_temperature:
+      name: "Internal Temperature"
+    fan_rpm:
+      name: "Fan RPM"
+    input_power:
+      name: "Input Power"
+    output_power:
+      name: "Output Power"
 ```
