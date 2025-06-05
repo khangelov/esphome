@@ -25,14 +25,52 @@ CONF_WATT_OUT = "output_power"
 
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(DPS1200),
-    cv.Optional(CONF_GRID_VOLTAGE): sensor.sensor_schema(UNIT_VOLT, ICON_FLASH, 1, DEVICE_CLASS_VOLTAGE),
-    cv.Optional(CONF_GRID_CURRENT): sensor.sensor_schema(UNIT_AMPERE, ICON_POWER, 1, DEVICE_CLASS_CURRENT),
-    cv.Optional(CONF_OUTPUT_VOLTAGE): sensor.sensor_schema(UNIT_VOLT, ICON_FLASH, 1, DEVICE_CLASS_VOLTAGE),
-    cv.Optional(CONF_OUTPUT_CURRENT): sensor.sensor_schema(UNIT_AMPERE, ICON_POWER, 1, DEVICE_CLASS_CURRENT),
-    cv.Optional(CONF_INTERNAL_TEMPERATURE): sensor.sensor_schema(UNIT_CELSIUS, ICON_THERMOMETER, 1, DEVICE_CLASS_TEMPERATURE),
-    cv.Optional(CONF_FAN_RPM): sensor.sensor_schema(None, ICON_FAN, 0),
-    cv.Optional(CONF_WATT_IN): sensor.sensor_schema(UNIT_WATT, ICON_FLASH, 1, DEVICE_CLASS_POWER),
-    cv.Optional(CONF_WATT_OUT): sensor.sensor_schema(UNIT_WATT, ICON_FLASH, 1, DEVICE_CLASS_POWER),
+    cv.Optional(CONF_GRID_VOLTAGE): sensor.sensor_schema(
+        unit_of_measurement=UNIT_VOLT,
+        icon=ICON_FLASH,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_VOLTAGE
+    ),
+    cv.Optional(CONF_GRID_CURRENT): sensor.sensor_schema(
+        unit_of_measurement=UNIT_AMPERE,
+        icon=ICON_POWER,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_CURRENT
+    ),
+    cv.Optional(CONF_OUTPUT_VOLTAGE): sensor.sensor_schema(
+        unit_of_measurement=UNIT_VOLT,
+        icon=ICON_FLASH,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_VOLTAGE
+    ),
+    cv.Optional(CONF_OUTPUT_CURRENT): sensor.sensor_schema(
+        unit_of_measurement=UNIT_AMPERE,
+        icon=ICON_POWER,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_CURRENT
+    ),
+    cv.Optional(CONF_INTERNAL_TEMPERATURE): sensor.sensor_schema(
+        unit_of_measurement=UNIT_CELSIUS,
+        icon=ICON_THERMOMETER,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_TEMPERATURE
+    ),
+    cv.Optional(CONF_FAN_RPM): sensor.sensor_schema(
+        icon=ICON_FAN,
+        accuracy_decimals=0
+    ),
+    cv.Optional(CONF_WATT_IN): sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        icon=ICON_FLASH,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER
+    ),
+    cv.Optional(CONF_WATT_OUT): sensor.sensor_schema(
+        unit_of_measurement=UNIT_WATT,
+        icon=ICON_FLASH,
+        accuracy_decimals=1,
+        device_class=DEVICE_CLASS_POWER
+    ),
 }).extend(cv.polling_component_schema("60s")).extend(i2c.i2c_device_schema())
 
 async def to_code(config):
