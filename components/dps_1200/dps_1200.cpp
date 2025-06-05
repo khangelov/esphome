@@ -13,11 +13,9 @@ void DPS1200::update() {
   for (uint8_t i = 0; i < 6; i++) {
     uint8_t cs = (this->address_ << 1) + reg[i];
     uint8_t regCS = ((0xff - cs) + 1) & 0xff;
-    this->write((uint8_t[]){reg[i], regCS}, 2);
-   /*
+
     uint8_t buffer[2] = {reg[i], regCS};
     this->write(buffer, 2);
-   */ 
     delay(1);
     this->read((uint8_t *)msg, 3);
     uint16_t ret = (msg[1] << 8) | msg[0];
