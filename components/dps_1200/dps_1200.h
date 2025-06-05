@@ -4,11 +4,11 @@
 #include "esphome/core/component.h"
 
 namespace esphome {
-namespace hppsu_monitor {
+namespace dps_1200 {
 
-class HPPSUMonitor : public PollingComponent, public i2c::I2CDevice {
+class DPS1200 : public PollingComponent, public i2c::I2CDevice {
  public:
-  HPPSUMonitor() = default;
+  DPS1200() = default;
 
   void set_sensors(sensor::Sensor *volt_in, sensor::Sensor *amp_in,
                    sensor::Sensor *volt_out, sensor::Sensor *amp_out,
@@ -41,5 +41,5 @@ class HPPSUMonitor : public PollingComponent, public i2c::I2CDevice {
   float grid_v_{0}, grid_a_{0}, out_v_{0}, out_a_{0};
 };
 
-}  // namespace hppsu_monitor
+}  // namespace dps_1200
 }  // namespace esphome

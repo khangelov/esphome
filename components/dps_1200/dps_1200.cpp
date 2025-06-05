@@ -1,12 +1,12 @@
-#include "hppsu_monitor.h"
+#include "dps_1200.h"
 #include "esphome/core/log.h"
 
 namespace esphome {
-namespace hppsu_monitor {
+namespace dps_1200 {
 
-static const char *const TAG = "hppsu_monitor";
+static const char *const TAG = "dps_1200";
 
-void HPPSUMonitor::update() {
+void DPS1200::update() {
   const uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
   uint16_t msg[3];
 
@@ -58,5 +58,5 @@ void HPPSUMonitor::update() {
     watt_out_->publish_state(out_v_ * out_a_);
 }
 
-}  // namespace hppsu_monitor
+}  // namespace dps_1200
 }  // namespace esphome
