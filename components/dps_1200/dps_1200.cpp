@@ -1,12 +1,12 @@
-#include "dps1200_sensor.h"
+#include "hppsu_monitor.h"
 #include "esphome/core/log.h"
 
 namespace esphome {
-namespace dps1200 {
+namespace hppsu_monitor {
 
-static const char *const TAG = "dps1200";
+static const char *const TAG = "hppsu_monitor";
 
-void DPS1200Sensor::update() {
+void HPPSUMonitor::update() {
   const uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
   uint16_t msg[3];
 
@@ -15,8 +15,7 @@ void DPS1200Sensor::update() {
     uint8_t regCS = ((0xff - cs) + 1) & 0xff;
 
     this->write((uint8_t[]){reg[i], regCS}, 2);
-    delay(1);  // Short delay
-
+    delay(1);
     this->read((uint8_t *)msg, 3);
     uint16_t ret = (msg[1] << 8) | msg[0];
     float stat = 0.0f;
@@ -24,18 +23,22 @@ void DPS1200Sensor::update() {
     switch (i) {
       case 0:
         stat = ret / 32.0f;
+        grid_v_ = stat;
         if (volt_in_) volt_in_->publish_state(stat);
         break;
       case 1:
         stat = ret / 128.0f;
+        grid_a_ = stat;
         if (amp_in_) amp_in_->publish_state(stat);
         break;
       case 2:
         stat = ret / 256.0f;
+        out_v_ = stat;
         if (volt_out_) volt_out_->publish_state(stat);
         break;
       case 3:
         stat = ret / 128.0f;
+        out_a_ = stat;
         if (amp_out_) amp_out_->publish_state(stat);
         break;
       case 4:
@@ -48,7 +51,12 @@ void DPS1200Sensor::update() {
         break;
     }
   }
+
+  if (watt_in_ && grid_v_ > 0 && grid_a_ > 0)
+    watt_in_->publish_state(grid_v_ * grid_a_);
+  if (watt_out_ && out_v_ > 0 && out_a_ > 0)
+    watt_out_->publish_state(out_v_ * out_a_);
 }
 
-}  // namespace dps1200
+}  // namespace hppsu_monitor
 }  // namespace esphome

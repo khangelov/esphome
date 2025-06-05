@@ -12,6 +12,9 @@ CONF_OUTPUT_VOLTAGE = "output_voltage"
 CONF_OUTPUT_CURRENT = "output_current"
 CONF_INTERNAL_TEMPERATURE = "internal_temperature"
 CONF_FAN_RPM = "fan_rpm"
+CONF_WATT_IN = "input_power"
+CONF_WATT_OUT = "output_power"
+
 
 dps1200_ns = cg.esphome_ns.namespace("dps1200")
 DPS1200Sensor = dps1200_ns.class_("DPS1200Sensor", cg.PollingComponent, i2c.I2CDevice)
@@ -49,6 +52,17 @@ CONFIG_SCHEMA = (
             icon=ICON_FAN,
             accuracy_decimals=0,
         ),
+        cv.Optional(CONF_WATT_IN): sensor.sensor_schema(
+            unit_of_measurement="W",
+            icon=ICON_FLASH,
+            accuracy_decimals=2,
+        ),
+        cv.Optional(CONF_WATT_OUT): sensor.sensor_schema(
+            unit_of_measurement="W",
+            icon=ICON_FLASH,
+            accuracy_decimals=2,
+
+        ),
     }).extend(cv.polling_component_schema("10s")).extend(i2c.i2c_device_schema(0x5A))
 )
 
@@ -56,6 +70,8 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     await i2c.register_i2c_device(var, config)
+    watt_in = None
+    watt_out = None
 
     if CONF_GRID_VOLTAGE in config:
         sens = await sensor.new_sensor(config[CONF_GRID_VOLTAGE])
@@ -80,3 +96,16 @@ async def to_code(config):
     if CONF_FAN_RPM in config:
         sens = await sensor.new_sensor(config[CONF_FAN_RPM])
         cg.add(var.set_sensors(None, None, None, None, None, sens))
+    
+    if CONF_WATT_IN in config:
+        watt_in = await sensor.new_sensor(config[CONF_WATT_IN])
+
+    if CONF_WATT_OUT in config:
+        watt_out = await sensor.new_sensor(config[CONF_WATT_OUT])       
+    
+    cg.add(var.set_sensors(
+        config.get(CONF_GRID_VOLTAGE), config.get(CONF_GRID_CURRENT),
+        config.get(CONF_OUTPUT_VOLTAGE), config.get(CONF_OUTPUT_CURRENT),
+        config.get(CONF_INTERNAL_TEMPERATURE), config.get(CONF_FAN_RPM),
+        watt_in, watt_out
+    ))
