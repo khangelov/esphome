@@ -7,36 +7,21 @@ namespace dps_1200 {
 static const char *const TAG = "dps_1200";
 
 
+
 void DPS1200::update() {
   uint8_t reg_addresses[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
   float stat;
+  optional<uint16_t> raw_value;
 
   for (uint8_t i = 0; i < 6; i++) {
-    uint8_t current_reg = reg_addresses[i];
-    
-    // --- Start of inlined read_dps1200_register logic ---
-    // Calculate checksum
-    uint8_t cs = (this->address_ << 1) + current_reg;
-    uint8_t regCS = ((0xff - cs) + 1) & 0xff;
+    raw_value = this->read_dps1200_register(reg_addresses[i]);
 
-    // Write register address and checksum
-    uint8_t write_buffer[2] = {current_reg, regCS};
-    if (this->write(write_buffer, 2) != i2c::ERROR_OK) {
-      ESP_LOGW(TAG, "I2C write failed for register 0x%02X. Skipping this register.", current_reg);
-      continue; // Skip to the next register if write failed
-    }
-    delay(1); // Short delay as in original code
-
-    // Read 3 bytes (LSB, MSB, Checksum/Status byte)
-    uint8_t read_buffer[3];
-    if (this->read(read_buffer, 3) != i2c::ERROR_OK) {
-      ESP_LOGW(TAG, "I2C read failed for register 0x%02X. Skipping this register.", current_reg);
+    if (!raw_value.has_value()) {
+      ESP_LOGW(TAG, "Failed to read from DPS1200 register 0x%02X. Skipping this register.", reg_addresses[i]);
       continue; // Skip to the next register if read failed
     }
 
-    // Original code: msg[0] = LSB, msg[1] = MSB
-    uint16_t ret = (read_buffer[1] << 8) | read_buffer[0];
-    // --- End of inlined read_dps1200_register logic ---
+    uint16_t ret = raw_value.value();
 
     // Process register data and publish state
     switch (i) {
@@ -67,7 +52,7 @@ void DPS1200::update() {
       case 4: // Internal Temperature (0x1C)
         if (this->internal_temp_ != nullptr) {
           stat = ret / 32.0;
-          this->internal_temp_->publish_state(stat); // Using ESPHome's f2c
+          this->internal_temp_->publish_state(esphome::f2c(stat)); // Using ESPHome's f2c
         }
         break;
       case 5: // Fan RPM (0x1E)
@@ -77,7 +62,7 @@ void DPS1200::update() {
         }
         break;
     }
-  }
+
  /*
   const uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
   uint16_t msg[3];
