@@ -6,6 +6,33 @@ namespace dps_1200 {
 
 static const char *const TAG = "dps_1200";
 
+optional<uint16_t> DPS1200Sensor::read_dps1200_register(uint8_t reg_address) {
+  // Calculate checksum as per original code
+  uint8_t cs = (this->address_ << 1) + reg_address;
+  uint8_t regCS = ((0xff - cs) + 1) & 0xff;
+
+  // Write register address and checksum
+  uint8_t write_buffer[2] = {reg_address, regCS};
+  if (this->write(write_buffer, 2) != i2c::ERROR_OK) {
+    ESP_LOGW(TAG, "I2C write failed for register 0x%02X", reg_address);
+    return {}; // Return empty optional on failure
+  }
+  delay(1); // Short delay as in original code
+
+  // Read 3 bytes (LSB, MSB, Checksum/Status byte)
+  uint8_t read_buffer[3];
+  if (this->read(read_buffer, 3) != i2c::ERROR_OK) {
+    ESP_LOGW(TAG, "I2C read failed for register 0x%02X", reg_address);
+    return {}; // Return empty optional on failure
+  }
+
+  // Original code: msg[0] = LSB, msg[1] = MSB
+  // uint16_t ret = (msg[1] << 8) + msg[0];
+  uint16_t ret = (read_buffer[1] << 8) | read_buffer[0];
+
+  return ret;
+}
+
 void DPS1200::update() {
   uint8_t reg_addresses[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
   float stat;
