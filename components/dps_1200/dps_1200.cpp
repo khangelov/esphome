@@ -77,7 +77,7 @@ void DPS1200::update() {
         }
         break;
     }
-
+  }
  /*
   const uint8_t reg[6] = {0x08, 0x0a, 0x0e, 0x10, 0x1c, 0x1e};
   uint16_t msg[3];
