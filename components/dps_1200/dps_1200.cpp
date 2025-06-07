@@ -67,7 +67,7 @@ void DPS1200::update() {
       case 4: // Internal Temperature (0x1C)
         if (this->internal_temp_ != nullptr) {
           stat = ret / 32.0;
-          this->internal_temp_->publish_state(esphome::f2c(stat)); // Using ESPHome's f2c
+          this->internal_temp_->publish_state(stat); // Using ESPHome's f2c
         }
         break;
       case 5: // Fan RPM (0x1E)
