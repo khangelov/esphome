@@ -23,7 +23,7 @@ void DPS1200::update() {
       ESP_LOGW(TAG, "I2C write failed for register 0x%02X. Skipping this register.", current_reg);
       continue; // Skip to the next register if write failed
     }
-    delay(1); // Short delay as in original code
+    esphome::delay(1); // Short delay as in original code
 
     // Read 3 bytes (LSB, MSB, Checksum/Status byte)
     uint8_t read_buffer[3];
