@@ -17,7 +17,7 @@ void SeeedEInk::update() {
   auto now = this->time_->now();
   if (!now.is_valid()) return;
 
-  // Night mode: 22:30 → 04:00 (no display update)
+  // Night mode: 22:30 → 04:00 (no redraw)
   bool night =
       (now.hour > 22 || (now.hour == 22 && now.minute >= 30)) ||
       (now.hour < 4);
@@ -43,8 +43,28 @@ void SeeedEInk::update() {
     this->write(buf, len);
   }
 
-  // Return to deep sleep (safe & supported)
+  // Go back to deep sleep
   App.safe_reboot();
+}
+
+/* ======================================================
+ * Required Display interface methods (NO-OP / CONSTANT)
+ * ====================================================== */
+
+void SeeedEInk::draw_pixel_at(int, int, Color) {
+  // Not supported – text-only display
+}
+
+display::DisplayType SeeedEInk::get_display_type() {
+  return display::DisplayType::DISPLAY_TYPE_BINARY;
+}
+
+int SeeedEInk::get_width_internal() {
+  return 264;  // Seeed 2.7"
+}
+
+int SeeedEInk::get_height_internal() {
+  return 176;  // Seeed 2.7"
 }
 
 }  // namespace seeed_eink_i2c
