@@ -11,6 +11,12 @@ class SeeedEInk : public display::Display, public i2c::I2CDevice {
   void setup() override;
   void update() override;
 
+  // REQUIRED by Display base class
+  void draw_pixel_at(int x, int y, Color color) override;
+  display::DisplayType get_display_type() override;
+  int get_width_internal() override;
+  int get_height_internal() override;
+
   void set_time(time::RealTimeClock *time) { this->time_ = time; }
 
  protected:
