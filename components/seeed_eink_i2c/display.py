@@ -4,10 +4,10 @@ from esphome.components import display, i2c
 from esphome.const import CONF_ID
 
 seeed_ns = cg.esphome_ns.namespace("seeed_eink_i2c")
-SeeedEInk = seeed_ns.class_("SeeedEInk", display.DisplayBuffer, i2c.I2CDevice)
+SeeedEInk = seeed_ns.class_("SeeedEInk", display.Display, i2c.I2CDevice)
 
 CONFIG_SCHEMA = (
-    display.DISPLAY_SCHEMA.extend(
+    display.FULL_DISPLAY_SCHEMA.extend(
         {
             cv.GenerateID(): cv.declare_id(SeeedEInk),
         }
