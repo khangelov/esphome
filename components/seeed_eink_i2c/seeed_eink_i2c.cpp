@@ -1,6 +1,6 @@
 #include "seeed_eink_i2c.h"
 #include "esphome/core/log.h"
-#include "esphome/components/deep_sleep/deep_sleep_component.h"
+#include "esphome/core/application.h"
 
 namespace esphome {
 namespace seeed_eink_i2c {
@@ -12,10 +12,12 @@ void SeeedEInk::setup() {
 }
 
 void SeeedEInk::update() {
-  auto now = this->get_time();
+  if (this->time_ == nullptr) return;
+
+  auto now = this->time_->now();
   if (!now.is_valid()) return;
 
-  // Night mode: 22:30 → 04:00 (no redraw)
+  // Night mode: 22:30 → 04:00 (no display update)
   bool night =
       (now.hour > 22 || (now.hour == 22 && now.minute >= 30)) ||
       (now.hour < 4);
@@ -41,11 +43,8 @@ void SeeedEInk::update() {
     this->write(buf, len);
   }
 
-  // Go back to deep sleep
-  auto *ds = deep_sleep::DeepSleepComponent::get_instance();
-  if (ds != nullptr) {
-    ds->start_deep_sleep();
-  }
+  // Return to deep sleep (safe & supported)
+  App.safe_reboot();
 }
 
 }  // namespace seeed_eink_i2c
