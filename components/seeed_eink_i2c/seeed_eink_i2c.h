@@ -1,11 +1,11 @@
 #pragma once
-#include "esphome/components/display/display_buffer.h"
+#include "esphome/components/display/display.h"
 #include "esphome/components/i2c/i2c.h"
 
 namespace esphome {
 namespace seeed_eink_i2c {
 
-class SeeedEInk : public display::DisplayBuffer, public i2c::I2CDevice {
+class SeeedEInk : public display::Display, public i2c::I2CDevice {
  public:
   void setup() override;
   void update() override;
